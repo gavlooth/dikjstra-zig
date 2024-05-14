@@ -24,6 +24,14 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const zuckdb = b.dependency("zuckdb", .{
+        .target = target,
+        .optimize = optimize,
+    }).module("zuckdb");
+
+    // tell zuckdb.zig where to find the duckdb.h file
+    zuckdb.addIncludePath(b.path("lib/"));
+
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
     // running `zig build`).
@@ -35,6 +43,14 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+
+    exe.root_module.addImport("zuckdb", zuckdb);
+
+    // link to libduckdb
+    exe.linkSystemLibrary("duckdb");
+
+    // tell the linker where to find libduckdb.so (linux) or libduckdb.dylib (macos)
+    exe.addLibraryPath(b.path("lib/"));
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default

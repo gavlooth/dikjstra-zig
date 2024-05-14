@@ -43,6 +43,11 @@
         //    // actually used.
         //    .lazy = false,
         //},
+
+        .zuckdb = .{
+            .url = "git+https://github.com/karlseguin/zuckdb.zig#master",
+            .hash = "1220a94357bac83a8331157f327ca89302c0bb27a3db06aacf5947798224aaa39099",
+        },
     },
 
     // Specifies the set of files and directories that are included in this package.
