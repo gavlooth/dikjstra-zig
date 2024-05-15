@@ -29,8 +29,14 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     }).module("zuckdb");
 
+    const allocator = std.heap.page_allocator;
+    const env_var = std.process.getEnvVarOwned(allocator, "ZUCKDB_DEV") catch "..\\lib";
+    errdefer allocator.free(env_var);
+
     // tell zuckdb.zig where to find the duckdb.h file
-    zuckdb.addIncludePath(b.path("lib/"));
+    // zuckdb.addIncludePath(b.path("lib/"));
+
+    zuckdb.addIncludePath(.{ .path = env_var });
 
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
@@ -46,11 +52,11 @@ pub fn build(b: *std.Build) void {
 
     exe.root_module.addImport("zuckdb", zuckdb);
 
-    // link to libduckdb
+    exe.addLibraryPath(.{ .path = env_var });
+
     exe.linkSystemLibrary("duckdb");
 
     // tell the linker where to find libduckdb.so (linux) or libduckdb.dylib (macos)
-    exe.addLibraryPath(b.path("lib/"));
 
     // This declares intent for the executable to be installed into the
     // standard location when the user invokes the "install" step (the default
