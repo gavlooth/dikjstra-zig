@@ -1,61 +1,89 @@
 const std = @import("std");
-
+const dj = @import("dijkstra.zig");
 const zuckdb = @import("zuckdb");
 
 pub fn main() !void {
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
-
-    try stdout.print("Loading DuckDB", .{});
-
-    try bw.flush(); // don't forget to flush!
-
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    // const db = try zuckdb.DB.init(allocator, "/home/heefoo/.local/share/db.duck", .{});
 
-    // const db = try zuckdb.DB.init(allocator, ":memory", .{});
+    const gpa_allocator = gpa.allocator();
+
+    var arena = std.heap.ArenaAllocator.init(gpa_allocator);
+    arena.deinit();
+    const allocator = arena.allocator();
+
+    const env_var = std.process.getEnvVarOwned(allocator, "DUCK_DB_FILE") catch "C:\\Users\\chris\\db.duck";
+
+    std.debug.print("DB: {s}\n", .{env_var});
+    const allocator_1 = arena.allocator();
 
     var open_err: ?[]u8 = null;
-    const db = zuckdb.DB.initWithErr(allocator, "C:\\Users\\chris\\db.duck", .{}, &open_err) catch |err| {
+
+    const db = zuckdb.DB.initWithErr(allocator_1, env_var, .{}, &open_err) catch |err| {
         if (err == error.OpenDB) {
-            defer allocator.free(open_err.?);
-            std.debug.print("DB open: {s}", .{open_err.?});
+            defer allocator_1.free(open_err.?);
+            std.debug.print("DB open: {s}\n", .{open_err.?});
         }
         return err;
     };
+    // defer db.deinit();
 
-    try stdout.print("DuckDB Loaded", .{});
-    defer db.deinit();
+    var pool = try db.pool(.{ .size = 2 });
 
-    var conn = try db.conn();
-    defer {
-        // allocator.free(db);
-        conn.deinit();
-    }
+    std.debug.print("what:  {?} ", .{@TypeOf(pool)});
+    // the pool owns the `db`, so pool.deinit will call `db.deinit`.
+    defer pool.deinit();
 
-    // for insert/update/delete returns the # changed rows
-    // returns 0 for other statements
+    var conn = try pool.acquire();
+    defer pool.release(conn);
 
-    // _ = try conn.exec("INSTALL spatial)", .{});
-    // _ = try conn.exec("LOAD spatial)", .{});
-    // _ = try conn.exec("create table users(id int)", .{});
+    // var conn = try db.conn();
 
-    // _ = try conn.exec("create table users(id int)", .{});
-
+    // defer {
+    //     // allocator.free(db);
+    //     conn.deinit();
+    // }
+    //
     _ = try conn.query("Load  'C:\\Users\\chris\\AppData\\Local\\duckdb\\spatial.duckdb_extension'", .{});
 
-    var rows = try conn.query("FROM duckdb_extensions()", .{});
-    defer rows.deinit();
+    var tessellation_rows = try conn.query("select ST_X(nock), ST_Y(nock) from unique_arrows limit 10", .{});
+    defer tessellation_rows.deinit();
 
-    while (try rows.next()) |row| {
-        // get the 0th column of the current row
-        const id = row.get([]u8, 0);
-        const installed = row.get(bool, 1);
-        const loaded = row.get(bool, 1);
-        std.debug.print("Plugin name: {s}, loaded: {}, Installed: {}\n", .{ id, loaded, installed });
+    while (try tessellation_rows.next()) |row| {
+        const x_coord = row.get(?f64, 0);
+        const y_coord = row.get(?f64, 1);
+        std.debug.print("x_coord:  {?} ", .{x_coord});
+        std.debug.print("y_coord:  {?}\n", .{y_coord});
     }
+
+    _ = std.debug.print("----------------------\n", .{});
+
+    const vertex1 = .{ .point = .{ .x = 0, .y = 0 }, .value = .{ .number = 0 } };
+    const vertex2 = .{ .point = .{ .x = 2222, .y = 0 }, .value = .{ .number = 10 } };
+    const cheapest = dj.cheapest_vertex(vertex1, vertex2);
+    std.debug.print("{any}", .{cheapest});
+
+    // ----------------------------------------
+    _ = try dj.initialize_vertexes(db, vertex1);
+    //
+    // if (vertexts) |vrxs| {
+    //     for (vrxs, 0..vrxs.len) |vrx| {
+    //         std.debug.print("{any}", .{vrx});
+    //     }
+    //
+    // }
+    // else |err|  {std.debug.print ("Error constructing vertexes {}\n") .{err}}
+    //
+    // if (vertexes) |vertices| {
+    //     // Iterate over the array of vertices
+    //     for (vertices) |vrx| {
+    //         // Process each vertex here
+    //         std.debug.print("Vertex : point({}, {}), value: {}\n", .{
+    //             vrx.point.x, vrx.point.y,
+    //         });
+    //     }
+    // } else |err| {
+    //     std.debug.print("Error initializing vertices: {}\n", .{err});
+    // }
 }
 
 test "simple test" {
@@ -64,3 +92,12 @@ test "simple test" {
     try list.append(42);
     try std.testing.expectEqual(@as(i32, 42), list.pop());
 }
+
+// var rows = try conn.query("show tables", .{});
+// defer rows.deinit();
+//
+// while (try rows.next()) |row| {
+//     // get the 0th column of the current row
+//     const name = row.get([]u8, 0);
+//     std.debug.print("Table name: {s}\n", .{name});
+// }

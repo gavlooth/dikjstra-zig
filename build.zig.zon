@@ -46,7 +46,7 @@
 
         .zuckdb = .{
             .url = "git+https://github.com/karlseguin/zuckdb.zig#master",
-            .hash = "1220a94357bac83a8331157f327ca89302c0bb27a3db06aacf5947798224aaa39099",
+            .hash = "122036fc8547349e09a6ae03523c49ee7834032df701c592bd2ca73a7e319f6aa903",
         },
     },
 
