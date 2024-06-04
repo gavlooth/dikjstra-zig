@@ -30,40 +30,37 @@ pub fn main() !void {
     var pool = try db.pool(.{ .size = 2 });
 
     std.debug.print("what:  {?} ", .{@TypeOf(pool)});
-    // the pool owns the `db`, so pool.deinit will call `db.deinit`.
     defer pool.deinit();
 
     var conn = try pool.acquire();
-    defer pool.release(conn);
-
-    // var conn = try db.conn();
-
-    // defer {
-    //     // allocator.free(db);
-    //     conn.deinit();
-    // }
-    //
     _ = try conn.query("Load  'C:\\Users\\chris\\AppData\\Local\\duckdb\\spatial.duckdb_extension'", .{});
 
-    var tessellation_rows = try conn.query("select ST_X(nock), ST_Y(nock) from unique_arrows limit 10", .{});
-    defer tessellation_rows.deinit();
-
-    while (try tessellation_rows.next()) |row| {
-        const x_coord = row.get(?f64, 0);
-        const y_coord = row.get(?f64, 1);
-        std.debug.print("x_coord:  {?} ", .{x_coord});
-        std.debug.print("y_coord:  {?}\n", .{y_coord});
-    }
+    // var tessellation_rows = try conn.query("select ST_X(nock), ST_Y(nock) from unique_arrows limit 10", .{});
+    // defer tessellation_rows.deinit();
+    //
+    // while (try tessellation_rows.next()) |row| {
+    //     const x_coord = row.get(?f64, 0);
+    //     const y_coord = row.get(?f64, 1);
+    //     std.debug.print("x_coord:  {?} ", .{x_coord});
+    //     std.debug.print("y_coord:  {?}\n", .{y_coord});
+    // }
 
     _ = std.debug.print("----------------------\n", .{});
 
     const vertex1 = .{ .point = .{ .x = 0, .y = 0 }, .value = .{ .number = 0 } };
-    const vertex2 = .{ .point = .{ .x = 2222, .y = 0 }, .value = .{ .number = 10 } };
-    const cheapest = dj.cheapest_vertex(vertex1, vertex2);
-    std.debug.print("{any}", .{cheapest});
+    _ = try dj.initialize_vertexes(pool, vertex1);
 
+    _ = std.debug.print("+++++++++++++++++\n", .{});
+    // const vertex2 = .{ .point = .{ .x = 2222, .y = 0 }, .value = .{ .number = 10 } };
+    //    const cheapest = dj.cheapest_vertex(vertex1, vertex2);
+    //    std.debug.print("{any}", .{cheapest});
+    // const the_pool = *const fn () pool.acquire();
+    // _ = try dj.initialize_vertexes(the_pool, vertex1);
+
+    // const init_query = "SELECT DISTINCT ON (nock), ST_X(nock), ST_Y(nock) from unique_arrows limit 10";
+    // const rs = try conn.query(init_query, .{});
     // ----------------------------------------
-    _ = try dj.initialize_vertexes(db, vertex1);
+
     //
     // if (vertexts) |vrxs| {
     //     for (vrxs, 0..vrxs.len) |vrx| {
@@ -100,4 +97,3 @@ test "simple test" {
 //     // get the 0th column of the current row
 //     const name = row.get([]u8, 0);
 //     std.debug.print("Table name: {s}\n", .{name});
-// }
