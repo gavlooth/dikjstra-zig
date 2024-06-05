@@ -34,53 +34,16 @@ pub fn main() !void {
 
     var conn = try pool.acquire();
     _ = try conn.query("Load  'C:\\Users\\chris\\AppData\\Local\\duckdb\\spatial.duckdb_extension'", .{});
-
-    // var tessellation_rows = try conn.query("select ST_X(nock), ST_Y(nock) from unique_arrows limit 10", .{});
-    // defer tessellation_rows.deinit();
-    //
-    // while (try tessellation_rows.next()) |row| {
-    //     const x_coord = row.get(?f64, 0);
-    //     const y_coord = row.get(?f64, 1);
-    //     std.debug.print("x_coord:  {?} ", .{x_coord});
-    //     std.debug.print("y_coord:  {?}\n", .{y_coord});
-    // }
-
     _ = std.debug.print("----------------------\n", .{});
 
     const vertex1 = .{ .point = .{ .x = 0, .y = 0 }, .value = .{ .number = 0 } };
-    _ = try dj.initialize_vertexes(pool, vertex1);
+    const array = try dj.initialize_vertexes(pool, vertex1);
 
-    _ = std.debug.print("+++++++++++++++++\n", .{});
-    // const vertex2 = .{ .point = .{ .x = 2222, .y = 0 }, .value = .{ .number = 10 } };
-    //    const cheapest = dj.cheapest_vertex(vertex1, vertex2);
-    //    std.debug.print("{any}", .{cheapest});
-    // const the_pool = *const fn () pool.acquire();
-    // _ = try dj.initialize_vertexes(the_pool, vertex1);
-
-    // const init_query = "SELECT DISTINCT ON (nock), ST_X(nock), ST_Y(nock) from unique_arrows limit 10";
-    // const rs = try conn.query(init_query, .{});
-    // ----------------------------------------
-
-    //
-    // if (vertexts) |vrxs| {
-    //     for (vrxs, 0..vrxs.len) |vrx| {
-    //         std.debug.print("{any}", .{vrx});
-    //     }
-    //
-    // }
-    // else |err|  {std.debug.print ("Error constructing vertexes {}\n") .{err}}
-    //
-    // if (vertexes) |vertices| {
-    //     // Iterate over the array of vertices
-    //     for (vertices) |vrx| {
-    //         // Process each vertex here
-    //         std.debug.print("Vertex : point({}, {}), value: {}\n", .{
-    //             vrx.point.x, vrx.point.y,
-    //         });
-    //     }
-    // } else |err| {
-    //     std.debug.print("Error initializing vertices: {}\n", .{err});
-    // }
+    _ = std.debug.print("{any}\n", .{array.items[1].point.x});
+    errdefer array.deinit() catch |err| {
+        _ = std.debug.print("pouts\n", .{});
+        _ = std.debug.print("{any}\n", .{err});
+    };
 }
 
 test "simple test" {
@@ -97,3 +60,46 @@ test "simple test" {
 //     // get the 0th column of the current row
 //     const name = row.get([]u8, 0);
 //     std.debug.print("Table name: {s}\n", .{name});
+//
+//
+// const vertex2 = .{ .point = .{ .x = 2222, .y = 0 }, .value = .{ .number = 10 } };
+//    const cheapest = dj.cheapest_vertex(vertex1, vertex2);
+//    std.debug.print("{any}", .{cheapest});
+// const the_pool = *const fn () pool.acquire();
+// _ = try dj.initialize_vertexes(the_pool, vertex1);
+
+// const init_query = "SELECT DISTINCT ON (nock), ST_X(nock), ST_Y(nock) from unique_arrows limit 10";
+// const rs = try conn.query(init_query, .{});
+// ----------------------------------------
+
+//
+// if (vertexts) |vrxs| {
+//     for (vrxs, 0..vrxs.len) |vrx| {
+//         std.debug.print("{any}", .{vrx});
+//     }
+//
+// }
+// else |err|  {std.debug.print ("Error constructing vertexes {}\n") .{err}}
+//
+// if (vertexes) |vertices| {
+//     // Iterate over the array of vertices
+//     for (vertices) |vrx| {
+//         // Process each vertex here
+//         std.debug.print("Vertex : point({}, {}), value: {}\n", .{
+//             vrx.point.x, vrx.point.y,
+//         });
+//     }
+// } else |err| {
+//     std.debug.print("Error initializing vertices: {}\n", .{err});
+// }
+//
+//
+// var tessellation_rows = try conn.query("select ST_X(nock), ST_Y(nock) from unique_arrows limit 10", .{});
+// defer tessellation_rows.deinit();
+//
+// while (try tessellation_rows.next()) |row| {
+//     const x_coord = row.get(?f64, 0);
+//     const y_coord = row.get(?f64, 1);
+//     std.debug.print("x_coord:  {?} ", .{x_coord});
+//     std.debug.print("y_coord:  {?}\n", .{y_coord});
+// }
