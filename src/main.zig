@@ -13,7 +13,7 @@ pub fn main() !void {
 
     const env_var = std.process.getEnvVarOwned(allocator, "DUCK_DB_FILE") catch "C:\\Users\\chris\\db.duck";
 
-    // std.debug.print("DB: {s}\n", .{env_var});
+    std.debug.print("DB: {s}\n", .{env_var});
     const allocator_1 = arena.allocator();
 
     var open_err: ?[]u8 = null;
@@ -25,27 +25,25 @@ pub fn main() !void {
         }
         return err;
     };
-    // defer db.deinit();
 
     var pool = try db.pool(.{ .size = 2 });
 
-    defer pool.deinit();
 
     var conn = try pool.acquire();
+
+
+    defer db.deinit();
+    defer pool.deinit();
+    defer pool.release(conn);
+
     _ = try conn.query("Load  'C:\\Users\\chris\\AppData\\Local\\duckdb\\spatial.duckdb_extension'", .{});
     _ = std.debug.print("----------------------\n", .{});
-
     const vertex1 = .{ .point = .{ .x = 0, .y = 0 }, .value = .{ .number = 0 } };
     const array = try dj.initialize_vertexes(pool, vertex1);
-
-    _ = std.debug.print("{any}\n", .{array.items[1].point.x});
+    
     for (array.items) |item| {
     _ = std.debug.print("{any}\n", .{item.point.x});
     }
-    errdefer array.deinit() catch |err| {
-        _ = std.debug.print("pouts\n", .{});
-        _ = std.debug.print("{any}\n", .{err});
-    };
 }
 
 test "simple test" {
@@ -55,3 +53,13 @@ test "simple test" {
     try std.testing.expectEqual(@as(i32, 42), list.pop());
 }
 
+
+
+     //
+
+    //
+    // _ = std.debug.print("{any}\n", .{array.items[1].point.x});
+    // errdefer array.deinit() catch |err| {
+    //     _ = std.debug.print("pouts\n", .{});
+    //     _ = std.debug.print("{any}\n", .{err});
+    // };
